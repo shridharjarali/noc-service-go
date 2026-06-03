@@ -1,6 +1,6 @@
-# Compiled binaries
-noc-service
-noc-services
+# Compiled binaries (root-level only)
+/noc-service
+/noc-services
 *.exe
 *.out
 
