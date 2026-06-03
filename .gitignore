@@ -1,0 +1,32 @@
+# Compiled binaries
+noc-service
+noc-services
+*.exe
+*.out
+
+# Runtime logs
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+*.env
+
+# Debug / scratch docs
+ROOT_CAUSE_ANALYSIS.md
+REAL_WORLD_TESTING_FLOW.md
+test.md
+
+# Images (documentation assets tracked separately)
+*.png
+*.jpg
+*.jpeg
