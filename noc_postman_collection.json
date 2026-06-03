@@ -1,0 +1,1840 @@
+{
+  "info": {
+    "_postman_id": "8b5f3a09-7a2e-4b2a-8d19-482ffbb7c12f",
+    "name": "NOC Service Automated Integration & Edge Cases",
+    "description": "Comprehensive automated test suite for the Go NOC Service, including happy path transitions (Create -> Forward -> Approve), search assertions, and validation edge cases.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "nocId",
+      "value": ""
+    },
+    {
+      "key": "applicationNo",
+      "value": ""
+    },
+    {
+      "key": "nocIdForRejection",
+      "value": ""
+    },
+    {
+      "key": "applicationNoForRejection",
+      "value": ""
+    },
+    {
+      "key": "nocIdForInitialRejection",
+      "value": ""
+    },
+    {
+      "key": "applicationNoForInitialRejection",
+      "value": ""
+    },
+    {
+      "key": "nocIdForSearchInprogress",
+      "value": ""
+    },
+    {
+      "key": "applicationNoForSearchInprogress",
+      "value": ""
+    },
+    {
+      "key": "nocIdForSearchPendingApproval",
+      "value": ""
+    },
+    {
+      "key": "applicationNoForSearchPendingApproval",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Happy Path Lifecycle",
+      "item": [
+        {
+          "name": "1.1 Create NOC Application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"NOC object returned with Generated ID and App No\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('Noc');",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('id');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('applicationNo');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('INPROGRESS');",
+                  "    ",
+                  "    // Store variables dynamically for downstream requests",
+                  "    pm.collectionVariables.set(\"nocId\", jsonData.Noc[0].id);",
+                  "    pm.collectionVariables.set(\"applicationNo\", jsonData.Noc[0].applicationNo);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"},\n        {\"name\": \"NOC Counter Employee\", \"code\": \"NOC_CEMP\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000001\",\n    \"landId\": \"LND-001\",\n    \"workflow\": {\n      \"action\": \"INITIATE\",\n      \"comment\": \"Initiating new application\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Forward for Verification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Workflow state updated to PENDINGAPPROVAL\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('PENDINGAPPROVAL');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"NOC Doc Verifier\", \"code\": \"NOC_DOC_VERIFIER\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocId}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNo}}\",\n    \"workflow\": {\n      \"action\": \"FORWARD\",\n      \"comment\": \"Forwarding for approval\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Approve Application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Workflow state updated to APPROVED\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('APPROVED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"NOC Approver\", \"code\": \"NOC_APPROVER\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocId}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNo}}\",\n    \"workflow\": {\n      \"action\": \"APPROVE\",\n      \"comment\": \"Approving application\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Search Final NOC",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Return exactly 1 application matching applicationNo\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "    pm.expect(jsonData.Noc[0].applicationNo).to.eql(pm.collectionVariables.get(\"applicationNo\"));",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('APPROVED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&applicationNo={{applicationNo}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "applicationNo",
+                  "value": "{{applicationNo}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Edge Cases & Error Assertions",
+      "item": [
+        {
+          "name": "2.1 Create - Missing TenantID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Contains Validation Error Message\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors[0].code).to.eql(\"MISSING_TENANT_ID\");",
+                  "    pm.expect(jsonData.Errors[0].message).to.include(\"tenantId is required\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ]\n    }\n  },\n  \"Noc\": {\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000001\",\n    \"landId\": \"LND-001\",\n    \"workflow\": {\n      \"action\": \"INITIATE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Create - Missing Workflow Action",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Contains Workflow Action Error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors[0].code).to.eql(\"EG_NOC_ERR\");",
+                  "    pm.expect(jsonData.Errors[0].message).to.include(\"Workflow action is mandatory\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ]\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000001\",\n    \"landId\": \"LND-001\",\n    \"workflow\": {}\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Update - Missing ApplicationNo / ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns INVALID_NOC_SEARCH Error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors[0].code).to.eql(\"INVALID_NOC_SEARCH\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"roles\": [\n        {\"name\": \"NOC Doc Verifier\", \"code\": \"NOC_DOC_VERIFIER\", \"tenantId\": \"pb.amritsar\"}\n      ]\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"workflow\": {\n      \"action\": \"FORWARD\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 Update - Unauthorized Role Action",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns Workflow Role Exception\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors[0].code).to.eql(\"EG_WF_ERROR\");",
+                  "    pm.expect(jsonData.Errors[0].message).to.include(\"Action FORWARD not found\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ]\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocId}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNo}}\",\n    \"workflow\": {\n      \"action\": \"FORWARD\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 Update - Invalid Action on APPROVED State",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns Workflow State Exception\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors[0].code).to.eql(\"EG_WF_ERROR\");",
+                  "    pm.expect(jsonData.Errors[0].message).to.include(\"Action FORWARD not found in config\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"roles\": [\n        {\"name\": \"NOC Doc Verifier\", \"code\": \"NOC_DOC_VERIFIER\", \"tenantId\": \"pb.amritsar\"}\n      ]\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocId}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNo}}\",\n    \"workflow\": {\n      \"action\": \"FORWARD\",\n      \"comment\": \"Invalid transition\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.6 Update - Direct Action Skip (APPROVE on INPROGRESS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns Transition Skip Exception\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors[0].code).to.eql(\"EG_WF_ERROR\");",
+                  "    pm.expect(jsonData.Errors[0].message).to.include(\"Action APPROVE not found in config\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"roles\": [\n        {\"name\": \"NOC Approver\", \"code\": \"NOC_APPROVER\", \"tenantId\": \"pb.amritsar\"}\n      ]\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocId}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNo}}\",\n    \"workflow\": {\n      \"action\": \"APPROVE\",\n      \"comment\": \"Skipping FORWARD action\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.7 Update - Reject Action without Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status is 400 Bad Request\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns Comment Mandatory Error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors[0].code).to.eql(\"NOC_UPDATE_ERROR_COMMENT_REQUIRED\");",
+                  "    pm.expect(jsonData.Errors[0].message).to.include(\"Comment is mandatory\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"roles\": [\n        {\"name\": \"NOC Approver\", \"code\": \"NOC_APPROVER\", \"tenantId\": \"pb.amritsar\"}\n      ]\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocId}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNo}}\",\n    \"workflow\": {\n      \"action\": \"REJECT\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Valid Rejection Lifecycle",
+      "item": [
+        {
+          "name": "3.1 Create NOC Application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"NOC object returned with Generated ID and App No\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('Noc');",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('id');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('applicationNo');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('INPROGRESS');",
+                  "    ",
+                  "    // Store variables dynamically for rejection lifecycle",
+                  "    pm.collectionVariables.set(\"nocIdForRejection\", jsonData.Noc[0].id);",
+                  "    pm.collectionVariables.set(\"applicationNoForRejection\", jsonData.Noc[0].applicationNo);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"},\n        {\"name\": \"NOC Counter Employee\", \"code\": \"NOC_CEMP\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000002\",\n    \"landId\": \"LND-002\",\n    \"workflow\": {\n      \"action\": \"INITIATE\",\n      \"comment\": \"Initiating application for rejection test\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Forward for Verification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Workflow state updated to PENDINGAPPROVAL\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('PENDINGAPPROVAL');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"NOC Doc Verifier\", \"code\": \"NOC_DOC_VERIFIER\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocIdForRejection}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNoForRejection}}\",\n    \"workflow\": {\n      \"action\": \"FORWARD\",\n      \"comment\": \"Forwarding for verifications\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Reject Application (With Comment)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Workflow state updated to REJECTED\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('REJECTED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"NOC Approver\", \"code\": \"NOC_APPROVER\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocIdForRejection}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNoForRejection}}\",\n    \"workflow\": {\n      \"action\": \"REJECT\",\n      \"comment\": \"Documents are incomplete and mismatched. Rejecting.\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 Search Rejected NOC",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Search returns exactly 1 application in REJECTED status\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "    pm.expect(jsonData.Noc[0].applicationNo).to.eql(pm.collectionVariables.get(\"applicationNoForRejection\"));",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('REJECTED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&applicationNo={{applicationNoForRejection}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "applicationNo",
+                  "value": "{{applicationNoForRejection}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 Create NOC for Initial Rejection",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"NOC object returned with Generated ID and App No\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('Noc');",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('id');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('applicationNo');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('INPROGRESS');",
+                  "    ",
+                  "    // Store variables dynamically for initial rejection lifecycle",
+                  "    pm.collectionVariables.set(\"nocIdForInitialRejection\", jsonData.Noc[0].id);",
+                  "    pm.collectionVariables.set(\"applicationNoForInitialRejection\", jsonData.Noc[0].applicationNo);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"},\n        {\"name\": \"NOC Counter Employee\", \"code\": \"NOC_CEMP\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000003\",\n    \"landId\": \"LND-003\",\n    \"workflow\": {\n      \"action\": \"INITIATE\",\n      \"comment\": \"Initiating application for direct rejection inprogress\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.6 Reject Application from INPROGRESS State",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Workflow state updated to REJECTED directly\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('REJECTED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"NOC Doc Verifier\", \"code\": \"NOC_DOC_VERIFIER\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocIdForInitialRejection}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNoForInitialRejection}}\",\n    \"workflow\": {\n      \"action\": \"REJECT\",\n      \"comment\": \"Verification failed at desk. Rejecting immediately.\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.7 Search Initially Rejected NOC",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Search returns application in REJECTED status\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "    pm.expect(jsonData.Noc[0].applicationNo).to.eql(pm.collectionVariables.get(\"applicationNoForInitialRejection\"));",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('REJECTED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\"\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&applicationNo={{applicationNoForInitialRejection}}",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "applicationNo",
+                  "value": "{{applicationNoForInitialRejection}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Advanced Search Operations",
+      "item": [
+        {
+          "name": "4.0 Setup - Create INPROGRESS Application",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"NOC object returned with Generated ID and App No\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('Noc');",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('id');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('applicationNo');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('INPROGRESS');",
+                  "    ",
+                  "    pm.collectionVariables.set(\"nocIdForSearchInprogress\", jsonData.Noc[0].id);",
+                  "    pm.collectionVariables.set(\"applicationNoForSearchInprogress\", jsonData.Noc[0].applicationNo);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"},\n        {\"name\": \"NOC Counter Employee\", \"code\": \"NOC_CEMP\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000004\",\n    \"landId\": \"LND-004\",\n    \"workflow\": {\n      \"action\": \"INITIATE\",\n      \"comment\": \"Seeding INPROGRESS application for search verification\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.0.1 Setup - Create Application for Forwarding",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"NOC object returned with Generated ID and App No\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('Noc');",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('id');",
+                  "    pm.expect(jsonData.Noc[0]).to.have.property('applicationNo');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('INPROGRESS');",
+                  "    ",
+                  "    pm.collectionVariables.set(\"nocIdForSearchPendingApproval\", jsonData.Noc[0].id);",
+                  "    pm.collectionVariables.set(\"applicationNoForSearchPendingApproval\", jsonData.Noc[0].applicationNo);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"},\n        {\"name\": \"NOC Counter Employee\", \"code\": \"NOC_CEMP\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000005\",\n    \"landId\": \"LND-005\",\n    \"workflow\": {\n      \"action\": \"INITIATE\",\n      \"comment\": \"Seeding PENDINGAPPROVAL application for search verification - Create step\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.0.2 Setup - Forward to PENDINGAPPROVAL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Workflow state updated to PENDINGAPPROVAL\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc[0].applicationStatus).to.eql('PENDINGAPPROVAL');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"NOC Doc Verifier\", \"code\": \"NOC_DOC_VERIFIER\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"id\": \"{{nocIdForSearchPendingApproval}}\",\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"applicationNo\": \"{{applicationNoForSearchPendingApproval}}\",\n    \"workflow\": {\n      \"action\": \"FORWARD\",\n      \"comment\": \"Forwarding to leave in PENDINGAPPROVAL state for search verification\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_update",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_update"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.1 Search All Applications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns list of applications\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Search by Status: INPROGRESS",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All returned applications have status INPROGRESS\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "    jsonData.Noc.forEach(function(item) {",
+                  "        pm.expect(item.applicationStatus).to.eql('INPROGRESS');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&status=INPROGRESS",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "status",
+                  "value": "INPROGRESS"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 Search by Status: PENDINGAPPROVAL",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All returned applications have status PENDINGAPPROVAL\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "    jsonData.Noc.forEach(function(item) {",
+                  "        pm.expect(item.applicationStatus).to.eql('PENDINGAPPROVAL');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&status=PENDINGAPPROVAL",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "status",
+                  "value": "PENDINGAPPROVAL"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 Search by Status: APPROVED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All returned applications have status APPROVED\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "    jsonData.Noc.forEach(function(item) {",
+                  "        pm.expect(item.applicationStatus).to.eql('APPROVED');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&status=APPROVED",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "status",
+                  "value": "APPROVED"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.5 Search by Status: REJECTED",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All returned applications have status REJECTED\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "    jsonData.Noc.forEach(function(item) {",
+                  "        pm.expect(item.applicationStatus).to.eql('REJECTED');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&status=REJECTED",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "status",
+                  "value": "REJECTED"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.6 Search by Multiple Statuses (INPROGRESS, APPROVED)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All returned applications match queried statuses\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "    jsonData.Noc.forEach(function(item) {",
+                  "        pm.expect(['INPROGRESS', 'APPROVED']).to.include(item.applicationStatus);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&status=INPROGRESS,APPROVED",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "status",
+                  "value": "INPROGRESS,APPROVED"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.7 Search by Source: BPA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All returned applications have source BPA\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.be.greaterThan(0);",
+                  "    jsonData.Noc.forEach(function(item) {",
+                  "        pm.expect(item.source).to.eql('BPA');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&source=BPA",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "source",
+                  "value": "BPA"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Validation & Boundary Edge Cases",
+      "item": [
+        {
+          "name": "5.1 Create with Invalid User Roles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors).to.be.an('array');",
+                  "    pm.expect(jsonData.Errors.length).to.be.greaterThan(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Invalid Role\", \"code\": \"INVALID_ROLE\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000006\",\n    \"landId\": \"LND-006\",\n    \"workflow\": {\n      \"action\": \"INITIATE\",\n      \"comment\": \"Testing create with strictly invalid roles which is unauthorized to initiate\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 Search for Non-Existent ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns empty Noc list with count 0\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Noc).to.be.an('array');",
+                  "    pm.expect(jsonData.Noc.length).to.eql(0);",
+                  "    pm.expect(jsonData.count).to.eql(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_search\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_search?tenantId=pb.amritsar&ids=99999999-9999-9999-9999-999999999999",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_search"
+              ],
+              "query": [
+                {
+                  "key": "tenantId",
+                  "value": "pb.amritsar"
+                },
+                {
+                  "key": "ids",
+                  "value": "99999999-9999-9999-9999-999999999999"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 Create with Workflow Bypass Action (APPROVE)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors).to.be.an('array');",
+                  "    pm.expect(jsonData.Errors.length).to.be.greaterThan(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"},\n        {\"name\": \"NOC Counter Employee\", \"code\": \"NOC_CEMP\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000007\",\n    \"landId\": \"LND-007\",\n    \"workflow\": {\n      \"action\": \"APPROVE\",\n      \"comment\": \"Attempting to directly approve a newly initiated application\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 Create with Workflow Bypass Action (FORWARD)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"HTTP Status is 400\", function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test(\"Contains error details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.Errors).to.be.an('array');",
+                  "    pm.expect(jsonData.Errors.length).to.be.greaterThan(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"RequestInfo\": {\n    \"apiId\": \"org.egov.noc\",\n    \"ver\": \"1.0\",\n    \"ts\": 1716900000,\n    \"action\": \"_create\",\n    \"msgId\": \"msg-001\",\n    \"userInfo\": {\n      \"id\": 100,\n      \"uuid\": \"aaa11111-2222-3333-4444-555566667777\",\n      \"userName\": \"NOC_TEST_USER\",\n      \"name\": \"NOC Test User\",\n      \"mobileNumber\": \"9876500001\",\n      \"tenantId\": \"pb.amritsar\",\n      \"roles\": [\n        {\"name\": \"Citizen\", \"code\": \"CITIZEN\", \"tenantId\": \"pb.amritsar\"},\n        {\"name\": \"NOC Counter Employee\", \"code\": \"NOC_CEMP\", \"tenantId\": \"pb.amritsar\"}\n      ],\n      \"type\": \"EMPLOYEE\"\n    }\n  },\n  \"Noc\": {\n    \"tenantId\": \"pb.amritsar\",\n    \"nocType\": \"FIRE_NOC\",\n    \"source\": \"BPA\",\n    \"sourceRefId\": \"PB-BP-2026-05-31-000008\",\n    \"landId\": \"LND-008\",\n    \"workflow\": {\n      \"action\": \"FORWARD\",\n      \"comment\": \"Attempting to directly forward a newly initiated application\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "http://localhost:8100/noc-services/v1/noc/_create",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "8100",
+              "path": [
+                "noc-services",
+                "v1",
+                "noc",
+                "_create"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
