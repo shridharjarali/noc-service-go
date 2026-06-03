@@ -25,8 +25,3 @@ Thumbs.db
 ROOT_CAUSE_ANALYSIS.md
 REAL_WORLD_TESTING_FLOW.md
 test.md
-
-# Images (documentation assets tracked separately)
-*.png
-*.jpg
-*.jpeg
